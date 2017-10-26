@@ -8,6 +8,16 @@ module.exports = function(homebridge) {
   homebridge.registerAccessory('homebridge-garagedoor-command', 'GarageCommand', GarageCmdAccessory);
 };
 
+function setIntervalX(callback, delay, repetitions) {
+  var x = 0;
+  var intervalID = setInterval(function () {
+    callback();
+    if (++x === repetitions) {
+      clearInterval(intervalID);
+    }
+  }, delay);
+}
+
 function GarageCmdAccessory(log, config) {
   this.log = log;
   this.name = config.name;
@@ -40,6 +50,7 @@ GarageCmdAccessory.prototype.setState = function(isClosed, callback) {
         callback(err || new Error('Error setting ' + accessory.name + ' to ' + state));
       } else {
         accessory.log('Set ' + accessory.name + ' to ' + state);
+        setIntervalX(() => accessory.getState(), 60000, 10);
         accessory.timer = setTimeout(function() {
           if (stdout.indexOf('OPENING') > -1) {
             accessory.garageDoorService.setCharacteristic(Characteristic.CurrentDoorState, Characteristic.CurrentDoorState.OPEN);
